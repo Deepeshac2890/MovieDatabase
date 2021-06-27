@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_trending"
+        android:icon="@drawable/ic_baseline_home_24"
+        android:title="Trending" />
+
+    <item
+        android:id="@+id/navigation_movies"
+        android:icon="@drawable/ic_baseline_movie_24"
+        android:title="Now Playing" />
+    <item
+        android:id="@+id/fav_movies"
+        android:icon="@drawable/ic_fav"
+        android:title="My Favourites" />
+</menu>
