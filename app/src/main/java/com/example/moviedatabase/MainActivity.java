@@ -1,6 +1,7 @@
 package com.example.moviedatabase;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -8,9 +9,12 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.telephony.TelephonyManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.GridView;
@@ -19,12 +23,19 @@ import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import org.reactivestreams.Subscriber;
+
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity implements CustomAdapter.onMovieListener{
@@ -69,43 +80,76 @@ public class MainActivity extends AppCompatActivity implements CustomAdapter.onM
         return super.onCreateOptionsMenu(menu);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void setData(int t){
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.themoviedb.org")
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create()).build();
         TDBApi tdbApi = retrofit.create(TDBApi.class);
         String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-        Call<movieClass> call;
         if(t == 0)
         {
-            call = tdbApi.getMovies(1,api_key);
+            tdbApi.getMovies(1,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
+                @Override
+                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+
+                }
+
+                @Override
+                public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
+                    movieClass details = movieClass;
+                    movieList = details.getResults();
+                    allMovies = details.getResults();
+                    putDataIntoRecyclerView(movieList);
+                }
+
+                @Override
+                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+
+                }
+
+                @Override
+                public void onComplete() {
+
+                }
+            });
             toolbar.setTitle("Trending Movies");
         }
         else{
-            call = tdbApi.getCurrentMovies(1,api_key);
+            TelephonyManager tm = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
+            String countryCodeValue = tm.getNetworkCountryIso();
+            tdbApi.getCurrentMovies(1,countryCodeValue,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
+                @Override
+                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+
+                }
+
+                @Override
+                public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
+                    movieClass details = movieClass;
+                    movieList = details.getResults();
+                    allMovies = details.getResults();
+                    putDataIntoRecyclerView(movieList);
+                }
+
+                @Override
+                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+
+                }
+
+                @Override
+                public void onComplete() {
+
+                }
+            });
             toolbar.setTitle("Now Playing");
         }
-
-
-        call.enqueue(new Callback<movieClass>() {
-            @Override
-            public void onResponse(Call<movieClass> call, Response<movieClass> response) {
-
-                movieClass details = response.body();
-                movieList = details.getResults();
-                allMovies = details.getResults();
-                putDataIntoRecyclerView(movieList);
-            }
-
-            @Override
-            public void onFailure(Call<movieClass> call, Throwable t) {
-
-            }
-        });
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {

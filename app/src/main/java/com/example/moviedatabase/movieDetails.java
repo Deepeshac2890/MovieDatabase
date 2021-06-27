@@ -15,10 +15,17 @@ import android.widget.ToggleButton;
 
 import com.bumptech.glide.Glide;
 
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class movieDetails extends AppCompatActivity {
@@ -110,18 +117,22 @@ public class movieDetails extends AppCompatActivity {
     private void getMovieDeepLink(int t){
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.themoviedb.org")
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create()).build();
         TDBApi tdbApi = retrofit.create(TDBApi.class);
         String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
 
-        Call<SingleMovie> call;
-        call = tdbApi.getMovie(String.valueOf(t),api_key);
-
-        call.enqueue(new Callback<SingleMovie>() {
+        tdbApi.getMovie(String.valueOf(t),api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(
+                AndroidSchedulers.mainThread()).subscribe(new Observer<SingleMovie>() {
             @Override
-            public void onResponse(Call<SingleMovie> call, Response<SingleMovie> response) {
-               // Toast.makeText(getApplicationContext(),response.toString(),Toast.LENGTH_LONG).show();
-                SingleMovie rs = response.body();
+            public void onSubscribe(@NonNull Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(@NonNull SingleMovie singleMovie) {
+                Toast.makeText(getApplicationContext(),"Data Came : " + singleMovie.getOriginalTitle(),Toast.LENGTH_LONG).show();
+                SingleMovie rs = singleMovie;
                 rating.setText(rs.getVoteAverage().toString());
                 overview.setText(rs.getOverview());
                 releaseDate.setText(rs.getReleaseDate());
@@ -130,10 +141,33 @@ public class movieDetails extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<SingleMovie> call, Throwable t) {
-                Toast.makeText(getApplicationContext(),t.toString(),Toast.LENGTH_LONG).show();
+            public void onError(@NonNull Throwable e) {
+                Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onComplete() {
+
             }
         });
+
+//        call.enqueue(new Callback<SingleMovie>() {
+//            @Override
+//            public void onResponse(Call<SingleMovie> call, Response<SingleMovie> response) {
+//               // Toast.makeText(getApplicationContext(),response.toString(),Toast.LENGTH_LONG).show();
+//                SingleMovie rs = response.body();
+//                rating.setText(rs.getVoteAverage().toString());
+//                overview.setText(rs.getOverview());
+//                releaseDate.setText(rs.getReleaseDate());
+//                Glide.with(getApplicationContext()).load("https://image.tmdb.org/t/p/w185" + rs.getPosterPath()).into(img);
+//                title.setText(rs.getTitle());
+//            }
+//
+//            @Override
+//            public void onFailure(Call<SingleMovie> call, Throwable t) {
+//                Toast.makeText(getApplicationContext(),t.toString(),Toast.LENGTH_LONG).show();
+//            }
+//        });
     }
 
 
