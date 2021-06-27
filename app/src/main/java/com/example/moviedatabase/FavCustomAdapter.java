@@ -8,6 +8,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,16 +18,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public class FavCustomAdapter extends RecyclerView.Adapter<FavCustomAdapter.myViewHolder> {
+public class FavCustomAdapter extends RecyclerView.Adapter<FavCustomAdapter.myViewHolder> implements Filterable {
     private Context mContext;
     private List<movieModal> mData;
+    private List<movieModal> allData;
     private onMovieListener mOnMovieListener;
 
     public FavCustomAdapter(Context mContext, List<movieModal> mData,onMovieListener onMovieListener) {
         this.mContext = mContext;
         this.mData = mData;
+        allData = new ArrayList<>(mData);
         this.mOnMovieListener = onMovieListener;
     }
 
@@ -74,4 +80,41 @@ public class FavCustomAdapter extends RecyclerView.Adapter<FavCustomAdapter.myVi
     public interface onMovieListener{
         void onMovieClick(int position);
     }
+
+    public Filter filter = new Filter() {
+        //run in background
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<movieModal> filteredList = new ArrayList<>();
+            if(constraint.toString().isEmpty())
+                filteredList.addAll(allData);
+            else
+            {
+                for(movieModal movie: allData)
+                {
+                    if(movie.getMovieTitle().toLowerCase().contains(constraint.toString().toLowerCase()))
+                    {
+                        filteredList.add(movie);
+                    }
+                }
+            }
+            FilterResults filterResults = new FilterResults();
+            filterResults.values = filteredList;
+            return filterResults;
+        }
+
+        // run on UI Thread
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            mData.clear();
+            mData.addAll((Collection<? extends movieModal>) results.values);
+            notifyDataSetChanged();
+        }
+    };
+
+    @Override
+    public Filter getFilter() {
+        return filter;
+    }
 }
+

@@ -33,8 +33,6 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
             List<Result> filteredList = new ArrayList<>();
-            System.out.println(constraint.toString() + " is the constraint." );
-            System.out.println("The All Data Length is : " + allData.size());
             if(constraint.toString().isEmpty())
                 filteredList.addAll(allData);
             else
@@ -48,7 +46,6 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
                     }
                 }
             }
-            System.out.println("The size of the Movies passed is : " + filteredList.size());
             FilterResults filterResults = new FilterResults();
             filterResults.values = filteredList;
             return filterResults;
@@ -59,7 +56,6 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
         protected void publishResults(CharSequence constraint, FilterResults results) {
             mData.clear();
             mData.addAll((Collection<? extends Result>) results.values);
-            System.out.println("The size of the Movies now is : " + mData.size());
             notifyDataSetChanged();
         }
     };
