@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity implements CustomAdapter.onM
 
                 movieClass details = response.body();
                 movieList = details.getResults();
-                System.out.println("asd");
                 allMovies = details.getResults();
                 putDataIntoRecyclerView(movieList);
             }
