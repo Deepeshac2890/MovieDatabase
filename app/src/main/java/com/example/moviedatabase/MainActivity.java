@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements CustomAdapter.onM
     CustomAdapter customAdapter;
     List<Result> allMovies;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
