@@ -27,16 +27,6 @@ public interface Dao
     @Update
     void update(movieModal model);
 
-    // below line is use to delete a
-    // specific course in our database.
-    @Delete
-    void delete(movieModal model);
-
-    // on below line we are making query to
-    // delete all courses from our database.
-    @Query("DELETE FROM movie_table")
-    void deleteAllMovies();
-
     @Query("SELECT * FROM movie_table where isFavourite")
     List<movieModal> getAllFavs();
 
@@ -46,9 +36,6 @@ public interface Dao
     @Query("SELECT EXISTS(SELECT * from movie_table WHERE movieTitle= :title)")
     int isExist(String title);
 
-    // This is for Searching
-    @Query("SELECT * FROM movie_table WHERE movieTitle LIKE :text")
-    List<movieModal> getSearchResults(String text);
 
     @Query("SELECT * FROM movie_table WHERE isTrending")
     List<movieModal> getAllTrending();
