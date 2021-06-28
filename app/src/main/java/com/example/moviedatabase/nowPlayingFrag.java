@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -42,6 +43,7 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
     public CustomAdapter customAdapter;
     List<Result> allMovies;
     Context mContext;
+    now_Playing_ViewModel now_playing_viewModel;
 
     public nowPlayingFrag() {
         // Required empty public constructor
@@ -73,8 +75,25 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_now_playing, container, false);
         rc = view.findViewById(R.id.recycler_view_now);
-        getData();
+        setData();
         return  view;
+    }
+
+    void setData(){
+        now_playing_viewModel = new ViewModelProvider(this).get(now_Playing_ViewModel.class);
+        now_playing_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+            @Override
+            public void onChanged(movieClass movieClass) {
+                if(movieClass != null)
+                {
+                    movieClass details = movieClass;
+                    movieList = details.getResults();
+                    allMovies = details.getResults();
+                    putDataIntoRecyclerView(movieList);
+                }
+            }
+        });
+        now_playing_viewModel.makeApiCall(getContext());
     }
 
     void getData(){

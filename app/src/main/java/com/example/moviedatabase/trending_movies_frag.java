@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,6 +32,7 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private trending_ViewModel trending_viewModel;
     RecyclerView rc;
     List<Result> movieList;
     public CustomAdapter customAdapter;
@@ -70,42 +72,59 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_trending_movies_frag, container, false);
         rc = view.findViewById(R.id.recycler_view_trending);
-        getData();
+        setData();
         return view;
     }
-    void getData(){
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.themoviedb.org")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create()).build();
-        TDBApi tdbApi = retrofit.create(TDBApi.class);
-        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-        tdbApi.getMovies(1,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
-                @Override
-                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
-
-                }
-
-                @Override
-                public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
+    void setData(){
+        trending_viewModel = new ViewModelProvider(this).get(trending_ViewModel.class);
+        trending_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+            @Override
+            public void onChanged(movieClass movieClass) {
+                if(movieClass != null)
+                {
                     movieClass details = movieClass;
                     movieList = details.getResults();
                     allMovies = details.getResults();
                     putDataIntoRecyclerView(movieList);
                 }
-
-                @Override
-                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-
-                }
-
-                @Override
-                public void onComplete() {
-
-                }
-            });
-
+            }
+        });
+        trending_viewModel.makeApiCall();
     }
+
+//    void getData(){
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("https://api.themoviedb.org")
+//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+//                .addConverterFactory(GsonConverterFactory.create()).build();
+//        TDBApi tdbApi = retrofit.create(TDBApi.class);
+//        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
+//        tdbApi.getMovies(1,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
+//                @Override
+//                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+//
+//                }
+//
+//                @Override
+//                public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
+//                    movieClass details = movieClass;
+//                    movieList = details.getResults();
+//                    allMovies = details.getResults();
+//                    putDataIntoRecyclerView(movieList);
+//                }
+//
+//                @Override
+//                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+//
+//                }
+//
+//                @Override
+//                public void onComplete() {
+//
+//                }
+//            });
+//
+//    }
 
     private void putDataIntoRecyclerView(List<Result> movieList) {
         customAdapter = new CustomAdapter(getContext(),movieList,this::onMovieClick);

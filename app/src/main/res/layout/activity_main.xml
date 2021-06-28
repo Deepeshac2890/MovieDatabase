@@ -7,19 +7,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-<!--    <androidx.recyclerview.widget.RecyclerView-->
-<!--        android:id="@+id/recycler_view"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="fill_parent"-->
-<!--        android:layout_weight="1"-->
-<!--        android:background="@color/purple_200"-->
-<!--        app:layout_constraintBottom_toTopOf="@+id/nav_view"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintHorizontal_bias="1.0"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent"-->
-<!--        app:layout_constraintVertical_bias="0.0" />-->
-
     <FrameLayout
         android:id="@+id/fragmentHome"
         android:name="com.bumptech.glide.manager.SupportRequestManagerFragment"
