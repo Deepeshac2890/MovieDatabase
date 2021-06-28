@@ -10,8 +10,6 @@ import com.example.moviedatabase.dagger.DaggerRetroComponent;
 import com.example.moviedatabase.dagger.RetroComponent;
 import com.example.moviedatabase.dagger.RetroModule;
 
-import dagger.internal.DaggerCollections;
-
 public class MyApplication extends Application {
     private RetroComponent retroComponent;
     @Override
