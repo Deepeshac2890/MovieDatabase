@@ -74,6 +74,7 @@ public class fav_movies_fragment extends Fragment implements FavCustomAdapter.on
     }
 
     private void putDataIntoRecyclerView(List<movieModal> movieList) {
+        movieDatabase md = movieDatabase.getInstance(getContext());
         favCustomAdapter = new FavCustomAdapter(getContext(),movieList,this);
         rc.setLayoutManager(new GridLayoutManager(getContext(),3));
         rc.setAdapter(favCustomAdapter);

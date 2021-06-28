@@ -37,12 +37,6 @@ public interface Dao
     @Query("DELETE FROM movie_table")
     void deleteAllMovies();
 
-    // below line is to read all the courses from our database.
-    // in this we are ordering our courses in ascending order
-    // with our course name.
-    @Query("SELECT * FROM movie_table ORDER BY movieTitle ASC")
-    LiveData<List<movieModal>> getAllMovies();
-
     @Query("SELECT * FROM movie_table where isFavourite")
     List<movieModal> getAllFavs();
 
@@ -55,4 +49,20 @@ public interface Dao
     // This is for Searching
     @Query("SELECT * FROM movie_table WHERE movieTitle LIKE :text")
     List<movieModal> getSearchResults(String text);
+
+    @Query("SELECT * FROM movie_table WHERE isTrending")
+    List<movieModal> getAllTrending();
+
+    @Query("SELECT * FROM movie_table WHERE isNowPlaying")
+    List<movieModal> getAllNowPlaying();
+
+    @Query("DELETE FROM movie_table WHERE isTrending AND NOT(isFavourite)")
+    void deleteTrendingMovies();
+
+    @Query("DELETE FROM movie_table WHERE isNowPlaying AND NOT(isFavourite)")
+    void deleteNowPlaying();
+
+    @Query("SELECT isFavourite FROM movie_table where movieTitle = :title")
+    boolean isItFav(String title);
+
 }

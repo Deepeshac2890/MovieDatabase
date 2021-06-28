@@ -36,6 +36,46 @@ public class movieModal implements Serializable {
 
     private boolean isFavourite;
 
+    private boolean isTrending;
+
+    private boolean isNowPlaying;
+
+    private String lastUpdatedTrending;
+
+    private String lastUpdatedNowPlaying;
+
+    public String getLastUpdatedTrending() {
+        return lastUpdatedTrending;
+    }
+
+    public void setLastUpdatedTrending(String lastUpdatedTrending) {
+        this.lastUpdatedTrending = lastUpdatedTrending;
+    }
+
+    public String getLastUpdatedNowPlaying() {
+        return lastUpdatedNowPlaying;
+    }
+
+    public void setLastUpdatedNowPlaying(String lastUpdatedNowPlaying) {
+        this.lastUpdatedNowPlaying = lastUpdatedNowPlaying;
+    }
+
+    public boolean isNowPlaying() {
+        return isNowPlaying;
+    }
+
+    public void setNowPlaying(boolean nowPlaying) {
+        isNowPlaying = nowPlaying;
+    }
+
+    public boolean isTrending() {
+        return isTrending;
+    }
+
+    public void setTrending(boolean trending) {
+        isTrending = trending;
+    }
+
     public movieModal(String movieTitle, String movieOverview, String posterPath, String rating, String releaseDate) {
         this.movieTitle = movieTitle;
         this.movieOverview = movieOverview;

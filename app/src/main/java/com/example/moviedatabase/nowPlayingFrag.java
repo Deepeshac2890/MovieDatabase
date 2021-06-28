@@ -8,14 +8,15 @@ Latest Version Date : 27-06-21
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,15 +26,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-
-import io.reactivex.Observer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
+import java.util.Locale;
 
 public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieListener,SearchView.OnQueryTextListener, MenuItem.OnActionExpandListener{
 
@@ -48,6 +49,8 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
     List<Result> allMovies;
     Context mContext;
     now_Playing_ViewModel now_playing_viewModel;
+    TextView last_update;
+    String formattedDate;
 
     public nowPlayingFrag() {
         // Required empty public constructor
@@ -79,61 +82,159 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_now_playing, container, false);
         rc = view.findViewById(R.id.recycler_view_now);
+        last_update = view.findViewById(R.id.last_update_now);
+
+        getCurrentDate();
         setData();
+
         return  view;
     }
 
-    void setData(){
-        now_playing_viewModel = new ViewModelProvider(this).get(now_Playing_ViewModel.class);
-        now_playing_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+    void getCurrentDate(){
+        Date c = Calendar.getInstance().getTime();
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        formattedDate = df.format(c);
+    }
+
+    void setData()
+    {
+        if(isInternetWorking())
+        {
+            last_update.setText("Last Updated On : " + formattedDate);
+            now_playing_viewModel = new ViewModelProvider(this).get(now_Playing_ViewModel.class);
+            now_playing_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+                @Override
+                public void onChanged(movieClass movieClass) {
+                    if(movieClass != null)
+                    {
+                        movieClass details = movieClass;
+                        movieList = details.getResults();
+                        allMovies = details.getResults();
+                        updateDB(movieList);
+                        putDataIntoRecyclerView(movieList);
+                    }
+                }
+            });
+            now_playing_viewModel.makeApiCall(getContext());
+        }
+        else
+        {
+            getFromDB();
+        }
+    }
+    public void updateDB(List<Result> movies) {
+        movieDatabase md = movieDatabase.getInstance(getContext());
+
+        // Clear the Database
+        AsyncTask.execute(new Runnable() {
             @Override
-            public void onChanged(movieClass movieClass) {
-                if(movieClass != null)
+            public void run() {
+                md.Dao().deleteNowPlaying();
+            }
+        });
+
+        // Insert into DB
+        for(Result movie: movies)
+        {
+            final boolean[] isFav = {false};
+            final int[] isExist = new int[1];
+            movieModal mm = new movieModal(movie.getTitle(),movie.getOverview(),movie.getPosterPath(),movie.getVoteAverage().toString(),movie.getReleaseDate());
+            mm.setId(movie.getId());
+            mm.setNowPlaying(true);
+            mm.setLastUpdatedNowPlaying(formattedDate);
+
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isExist[0] = md.Dao().isExist(mm.getMovieTitle());
+                    if(isExist[0] == 1)
+                    {
+                        isFav[0] = md.Dao().isItFav(mm.getMovieTitle());
+                    }
+                }
+            });
+            t.start();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (isExist[0] == 0)
+                    {
+                        // Insert Data
+                        md.Dao().insert(mm);
+                    }
+                    else
+                    {
+                        // Update Data
+                        mm.setFavourite(isFav[0]);
+                        md.Dao().update(mm);
+                    }
+                }
+            });
+        }
+    }
+
+    public void getFromDB(){
+        List<Result> results = new ArrayList<>();
+        movieDatabase md = movieDatabase.getInstance(getContext());
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<movieModal> list = md.Dao().getAllNowPlaying();
+                for(movieModal movie : list)
                 {
-                    movieClass details = movieClass;
-                    movieList = details.getResults();
-                    allMovies = details.getResults();
-                    putDataIntoRecyclerView(movieList);
+                    formattedDate = movie.getLastUpdatedNowPlaying();
+                    Result rs = new Result(movie.getPosterPath(),Double.parseDouble(movie.getRating()),movie.getMovieOverview(),movie.getReleaseDate(),movie.getId(),movie.getMovieTitle());
+                    results.add(rs);
+                }
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        putDataIntoRecyclerView(results);
+                    }
+                });
+            }
+        });
+
+        last_update.setText("Last Updated On : " + formattedDate);
+    }
+
+    public boolean isInternetWorking() {
+        final boolean[] success = new boolean[1];
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try  {
+                    try {
+                        URL url = new URL("https://google.com");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setConnectTimeout(10000);
+                        connection.connect();
+                        success[0] = connection.getResponseCode() == 200;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
-        now_playing_viewModel.makeApiCall(getContext());
-    }
 
-//    void getData(){
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl("https://api.themoviedb.org")
-//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-//                .addConverterFactory(GsonConverterFactory.create()).build();
-//        TDBApi tdbApi = retrofit.create(TDBApi.class);
-//        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-//        TelephonyManager tm = (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
-//        String countryCodeValue = tm.getNetworkCountryIso();
-//        tdbApi.getCurrentMovies(1,countryCodeValue,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
-//            @Override
-//            public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
-//
-//            }
-//
-//            @Override
-//            public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
-//                movieClass details = movieClass;
-//                movieList = details.getResults();
-//                allMovies = details.getResults();
-//                putDataIntoRecyclerView(movieList);
-//            }
-//
-//            @Override
-//            public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-//
-//            }
-//
-//            @Override
-//            public void onComplete() {
-//
-//            }
-//        });
-//    }
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return success[0];
+    }
 
     private void putDataIntoRecyclerView(List<Result> movieList) {
         customAdapter = new CustomAdapter(getContext(),movieList,this::onMovieClick);

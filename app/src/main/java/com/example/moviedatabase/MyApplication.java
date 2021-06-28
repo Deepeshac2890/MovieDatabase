@@ -15,9 +15,8 @@ public class MyApplication extends Application {
     private RetroComponent retroComponent;
     @Override
     public void onCreate() {
-        super.onCreate();
         retroComponent = DaggerRetroComponent.builder().retroModule(new RetroModule()).build();
-
+        super.onCreate();
     }
     public RetroComponent getRetroComponent(){
         return retroComponent;

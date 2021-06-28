@@ -6,6 +6,7 @@ Maintained By: Deepesh Acharya
 Latest Version Date : 28-06-21
 */
 
+import com.example.moviedatabase.movie_details_ViewModel;
 import com.example.moviedatabase.now_Playing_ViewModel;
 import com.example.moviedatabase.trending_ViewModel;
 
@@ -20,4 +21,6 @@ public interface RetroComponent {
     public void inject(trending_ViewModel trendingViewModel);
 
     public void injection(now_Playing_ViewModel now_playing_viewModel);
+
+    public void detailInjection(movie_details_ViewModel movie_details_viewModel);
 }

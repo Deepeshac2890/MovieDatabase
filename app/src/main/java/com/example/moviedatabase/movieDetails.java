@@ -7,28 +7,18 @@ Latest Version Date : 27-06-21
 */
 
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
-
-import io.reactivex.Observer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class movieDetails extends AppCompatActivity {
     Result selectedMovie;
@@ -40,6 +30,7 @@ public class movieDetails extends AppCompatActivity {
     TextView releaseDate;
     TextView title;
     ImageView img;
+    movie_details_ViewModel movie_details_viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +50,8 @@ public class movieDetails extends AppCompatActivity {
             String path = uri.toString();
             String id = path.substring(27);
 
-            int mid = Integer.valueOf(id);
-            Toast.makeText(this, "Path : " + mid, Toast.LENGTH_SHORT).show();
-            getMovieDeepLink(mid);
+//            int mid = Integer.valueOf(id);
+            getMovieDetailsDeepLink(id);
         }
         else
         {
@@ -113,71 +103,32 @@ public class movieDetails extends AppCompatActivity {
                 });
             }
         }
-
     }
 
-    private void getMovieDeepLink(int t){
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.themoviedb.org")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create()).build();
-        TDBApi tdbApi = retrofit.create(TDBApi.class);
-        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-
-        tdbApi.getMovie(String.valueOf(t),api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(
-                AndroidSchedulers.mainThread()).subscribe(new Observer<SingleMovie>() {
+    void getMovieDetailsDeepLink(String movieID){
+        String img_base_url ="https://image.tmdb.org/t/p/w185";
+        movie_details_viewModel = new ViewModelProvider(this).get(movie_details_ViewModel.class);
+        movie_details_viewModel.getRecyclerListObserver().observe(this, new androidx.lifecycle.Observer<SingleMovie>() {
             @Override
-            public void onSubscribe(@NonNull Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(@NonNull SingleMovie singleMovie) {
-                Toast.makeText(getApplicationContext(),"Data Came : " + singleMovie.getOriginalTitle(),Toast.LENGTH_LONG).show();
-                SingleMovie rs = singleMovie;
-                rating.setText(rs.getVoteAverage().toString());
-                overview.setText(rs.getOverview());
-                releaseDate.setText(rs.getReleaseDate());
-                Glide.with(getApplicationContext()).load("https://image.tmdb.org/t/p/w185" + rs.getPosterPath()).into(img);
-                title.setText(rs.getTitle());
-            }
-
-            @Override
-            public void onError(@NonNull Throwable e) {
-                Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onComplete() {
-
+            public void onChanged(SingleMovie singleMovie) {
+                if(singleMovie != null)
+                {
+                    SingleMovie rs = singleMovie;
+                    rating.setText(rs.getVoteAverage().toString());
+                    overview.setText(rs.getOverview());
+                    releaseDate.setText(rs.getReleaseDate());
+                    Glide.with(getApplicationContext()).load( img_base_url + rs.getPosterPath()).into(img);
+                    title.setText(rs.getTitle());
+                }
             }
         });
 
-//        call.enqueue(new Callback<SingleMovie>() {
-//            @Override
-//            public void onResponse(Call<SingleMovie> call, Response<SingleMovie> response) {
-//               // Toast.makeText(getApplicationContext(),response.toString(),Toast.LENGTH_LONG).show();
-//                SingleMovie rs = response.body();
-//                rating.setText(rs.getVoteAverage().toString());
-//                overview.setText(rs.getOverview());
-//                releaseDate.setText(rs.getReleaseDate());
-//                Glide.with(getApplicationContext()).load("https://image.tmdb.org/t/p/w185" + rs.getPosterPath()).into(img);
-//                title.setText(rs.getTitle());
-//            }
-//
-//            @Override
-//            public void onFailure(Call<SingleMovie> call, Throwable t) {
-//                Toast.makeText(getApplicationContext(),t.toString(),Toast.LENGTH_LONG).show();
-//            }
-//        });
+        movie_details_viewModel.makeApiCall(movieID);
     }
-
 
     public void favClicked(View view) {
         movieDatabase md = movieDatabase.getInstance(this.getApplicationContext());
         movieModal mm;
-        boolean isFav;
-        System.out.println("The TG VALUE UPPER IS : " + tg.isChecked() + tgValue);
         if(selectedMovie != null)
         {
             mm = new movieModal(selectedMovie.getTitle(),selectedMovie.getOverview(),selectedMovie.getPosterPath(),selectedMovie.getVoteAverage().toString(),selectedMovie.getReleaseDate());
@@ -189,7 +140,6 @@ public class movieDetails extends AppCompatActivity {
             mm.setId(selectedModal.getId());
         }
 
-        System.out.println("The TG VALUE IS : " + tg.isChecked());
         if(tgValue){
             AsyncTask.execute(new Runnable() {
                 @Override
@@ -238,11 +188,8 @@ public class movieDetails extends AppCompatActivity {
     }
 
     public void share(View view){
-        ApplicationInfo api = getApplicationContext().getApplicationInfo();
-        String apkPath = api.sourceDir;
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-//        String title;
         int id;
         if(selectedMovie != null)
         {

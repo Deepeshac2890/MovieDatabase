@@ -109,6 +109,18 @@ class Result implements Serializable {
     @Expose
     private String mediaType;
 
+    public Result(String posterPath, Double voteAverage, String overview, String releaseDate, Integer id, String title) {
+        this.posterPath = posterPath;
+        this.voteAverage = voteAverage;
+        this.overview = overview;
+        this.releaseDate = releaseDate;
+        this.id = id;
+        this.title = title;
+    }
+
+    public Result() {
+    }
+
     public String getOriginalLanguage() {
         return originalLanguage;
     }

@@ -6,8 +6,11 @@ Maintained By: Deepesh Acharya
 Latest Version Date : 27-06-21
 */
 
+import android.app.Activity;
+import android.app.TaskInfo;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
@@ -23,7 +27,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class trending_movies_frag extends Fragment implements CustomAdapter.onMovieListener, SearchView.OnQueryTextListener, MenuItem.OnActionExpandListener{
 
@@ -35,6 +47,8 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
     public CustomAdapter customAdapter;
     List<Result> allMovies;
     Context mContext;
+    TextView last_updated;
+    String formattedDate;
 
     private String mParam1;
     private String mParam2;
@@ -68,65 +82,171 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_trending_movies_frag, container, false);
+
         rc = view.findViewById(R.id.recycler_view_trending);
+        last_updated = view.findViewById(R.id.last_update_trending);
+
         setData();
+        getCurrentDate();
+
         return view;
     }
+
+    void getCurrentDate(){
+
+        Date c = Calendar.getInstance().getTime();
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        formattedDate = df.format(c);
+
+    }
+
     void setData(){
-        trending_viewModel = new ViewModelProvider(this).get(trending_ViewModel.class);
-        trending_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+        if(isInternetWorking())
+        {
+            // Get from Internet
+            last_updated.setText("Last Updated On : " + formattedDate);
+            trending_viewModel = new ViewModelProvider(this).get(trending_ViewModel.class);
+            trending_viewModel.getRecyclerListObserver().observe(getViewLifecycleOwner(), new androidx.lifecycle.Observer<movieClass>() {
+                @Override
+                public void onChanged(movieClass movieClass) {
+                    if(movieClass != null)
+                    {
+                        movieClass details = movieClass;
+                        movieList = details.getResults();
+                        allMovies = details.getResults();
+                        updateDB(movieList);
+                        putDataIntoRecyclerView(movieList);
+                    }
+                }
+            });
+            trending_viewModel.makeApiCall();
+        }
+        else {
+            // Get from DB
+            getFromDB();
+        }
+    }
+
+    public void getFromDB(){
+      List<Result> results = new ArrayList<>();
+      movieDatabase md = movieDatabase.getInstance(getContext());
+
+      AsyncTask.execute(new Runnable() {
+          @Override
+          public void run() {
+            List<movieModal> list = md.Dao().getAllTrending();
+            for(movieModal movie : list)
+            {
+                formattedDate = movie.getLastUpdatedTrending();
+                Result rs = new Result(movie.getPosterPath(),Double.parseDouble(movie.getRating()),movie.getMovieOverview(),movie.getReleaseDate(),movie.getId(),movie.getMovieTitle());
+                results.add(rs);
+            }
+
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    putDataIntoRecyclerView(results);
+                }
+            });
+          }
+      });
+      last_updated.setText("Last Updated On : " + formattedDate);
+    }
+
+    public boolean isInternetWorking() {
+        final boolean[] success = new boolean[1];
+        Thread thread = new Thread(new Runnable() {
+
             @Override
-            public void onChanged(movieClass movieClass) {
-                if(movieClass != null)
-                {
-                    movieClass details = movieClass;
-                    movieList = details.getResults();
-                    allMovies = details.getResults();
-                    putDataIntoRecyclerView(movieList);
+            public void run() {
+                try  {
+                    try {
+                        URL url = new URL("https://google.com");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setConnectTimeout(10000);
+                        connection.connect();
+                        success[0] = connection.getResponseCode() == 200;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
-        trending_viewModel.makeApiCall();
-    }
 
-//    void getData(){
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl("https://api.themoviedb.org")
-//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-//                .addConverterFactory(GsonConverterFactory.create()).build();
-//        TDBApi tdbApi = retrofit.create(TDBApi.class);
-//        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-//        tdbApi.getMovies(1,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
-//                @Override
-//                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
-//
-//                }
-//
-//                @Override
-//                public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
-//                    movieClass details = movieClass;
-//                    movieList = details.getResults();
-//                    allMovies = details.getResults();
-//                    putDataIntoRecyclerView(movieList);
-//                }
-//
-//                @Override
-//                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-//
-//                }
-//
-//                @Override
-//                public void onComplete() {
-//
-//                }
-//            });
-//
-//    }
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return success[0];
+    }
 
     private void putDataIntoRecyclerView(List<Result> movieList) {
         customAdapter = new CustomAdapter(getContext(),movieList,this::onMovieClick);
         rc.setLayoutManager(new GridLayoutManager(getContext(),3));
         rc.setAdapter(customAdapter);
+    }
+
+    public void updateDB(List<Result> movies)
+    {
+        movieDatabase md = movieDatabase.getInstance(getContext());
+
+        // Clear the Database
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                md.Dao().deleteTrendingMovies();
+            }
+        });
+
+        // Insert into DB
+        for(Result movie: movies)
+        {
+            final boolean[] isFav = {false};
+            movieModal mm = new movieModal(movie.getTitle(),movie.getOverview(),movie.getPosterPath(),movie.getVoteAverage().toString(),movie.getReleaseDate());
+            mm.setId(movie.getId());
+            mm.setTrending(true);
+            mm.setLastUpdatedTrending(formattedDate);
+            final int[] isExist = new int[1];
+
+           Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    isExist[0] = md.Dao().isExist(mm.getMovieTitle());
+                    if(isExist[0] == 1)
+                    {
+                        isFav[0] = md.Dao().isItFav(mm.getMovieTitle());
+                    }
+                }
+            });
+            t.start();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    if (isExist[0] == 0)
+                    {
+                        // Insert Data
+                        md.Dao().insert(mm);
+                    }
+                    else
+                    {
+//                        Update Data
+                        mm.setFavourite(isFav[0]);
+                        md.Dao().update(mm);
+                    }
+                }
+            });
+        }
     }
 
     @Override
