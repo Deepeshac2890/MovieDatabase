@@ -31,6 +31,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
     private onMovieListener mOnMovieListener;
     private List<Result> allData;
     String base_img_url = "https://image.tmdb.org/t/p/w185";
+
+    public List<Result> getData(){
+        return mData;
+    }
     public Filter filter = new Filter() {
         //run in background
         @Override
@@ -44,7 +48,6 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
                 {
                     if(movie.getTitle().toLowerCase().contains(constraint.toString().toLowerCase()))
                     {
-                        System.out.println(movie.getTitle());
                         filteredList.add(movie);
                     }
                 }

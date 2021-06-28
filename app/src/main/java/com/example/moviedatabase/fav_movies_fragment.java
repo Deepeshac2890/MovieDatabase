@@ -123,8 +123,11 @@ public class fav_movies_fragment extends Fragment implements FavCustomAdapter.on
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        if(favCustomAdapter != null)
+        if(favCustomAdapter != null){
             favCustomAdapter.filter.filter(newText);
+            mmList = favCustomAdapter.getData();
+        }
+
         return false;
     }
 

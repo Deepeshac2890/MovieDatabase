@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
@@ -145,6 +146,8 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    movieList = new ArrayList<>();
+                    movieList.addAll(results);
                     putDataIntoRecyclerView(results);
                 }
             });
@@ -167,7 +170,12 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
                         connection.connect();
                         success[0] = connection.getResponseCode() == 200;
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getContext(),"Not Connected to Internet",Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -275,7 +283,10 @@ public class trending_movies_frag extends Fragment implements CustomAdapter.onMo
     @Override
     public boolean onQueryTextChange(String newText) {
         if(customAdapter != null)
+        {
             customAdapter.filter.filter(newText);
+            movieList = customAdapter.getData();
+        }
         return false;
     }
 
