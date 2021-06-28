@@ -94,40 +94,40 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
         now_playing_viewModel.makeApiCall(getContext());
     }
 
-    void getData(){
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.themoviedb.org")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create()).build();
-        TDBApi tdbApi = retrofit.create(TDBApi.class);
-        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
-        TelephonyManager tm = (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        String countryCodeValue = tm.getNetworkCountryIso();
-        tdbApi.getCurrentMovies(1,countryCodeValue,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
-            @Override
-            public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
-                movieClass details = movieClass;
-                movieList = details.getResults();
-                allMovies = details.getResults();
-                putDataIntoRecyclerView(movieList);
-            }
-
-            @Override
-            public void onError(@io.reactivex.annotations.NonNull Throwable e) {
-
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
-    }
+//    void getData(){
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("https://api.themoviedb.org")
+//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+//                .addConverterFactory(GsonConverterFactory.create()).build();
+//        TDBApi tdbApi = retrofit.create(TDBApi.class);
+//        String api_key = "be8c01d9e1cfee0ed6e48585dc405260";
+//        TelephonyManager tm = (TelephonyManager)getContext().getSystemService(Context.TELEPHONY_SERVICE);
+//        String countryCodeValue = tm.getNetworkCountryIso();
+//        tdbApi.getCurrentMovies(1,countryCodeValue,api_key).toObservable().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<movieClass>() {
+//            @Override
+//            public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+//
+//            }
+//
+//            @Override
+//            public void onNext(@io.reactivex.annotations.NonNull movieClass movieClass) {
+//                movieClass details = movieClass;
+//                movieList = details.getResults();
+//                allMovies = details.getResults();
+//                putDataIntoRecyclerView(movieList);
+//            }
+//
+//            @Override
+//            public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+//
+//            }
+//
+//            @Override
+//            public void onComplete() {
+//
+//            }
+//        });
+//    }
 
     private void putDataIntoRecyclerView(List<Result> movieList) {
         customAdapter = new CustomAdapter(getContext(),movieList,this::onMovieClick);

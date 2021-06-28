@@ -12,6 +12,7 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +28,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
     private List<Result> mData;
     private onMovieListener mOnMovieListener;
     private List<Result> allData;
+    String base_img_url = "https://image.tmdb.org/t/p/w185";
     public Filter filter = new Filter() {
         //run in background
         @Override
@@ -78,7 +80,9 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.myViewHold
     public void onBindViewHolder(@NonNull myViewHolder holder, int position) {
          holder.id.setText(mData.get(position).getTitle());
          holder.name.setText(mData.get(position).getVoteAverage().toString());
-        Glide.with(mContext).load("https://image.tmdb.org/t/p/w185" + mData.get(position).getPosterPath()).into(holder.image);
+         Glide.with(mContext)
+                .load(base_img_url + mData.get(position).getPosterPath())
+                .placeholder(R.drawable.default_poster).into(holder.image);
     }
 
     @Override

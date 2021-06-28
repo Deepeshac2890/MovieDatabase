@@ -15,7 +15,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity{
 
     private ActionBar toolbar;
-    CustomAdapter customAdapter;
     Fragment trending_frag;
     Fragment now_frag;
     Fragment fav_frag;
@@ -41,7 +40,6 @@ public class MainActivity extends AppCompatActivity{
     void selectFragment(int opt){
         if(opt == 0)
         {
-
             toolbar.setTitle("Trending Movies");
             getSupportFragmentManager().beginTransaction().replace(R.id.fragmentHome,trending_frag).commit();
         }else if(opt == 1){
