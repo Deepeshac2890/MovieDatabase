@@ -122,6 +122,7 @@ public class nowPlayingFrag extends Fragment implements CustomAdapter.onMovieLis
             getFromDB();
         }
     }
+
     public void updateDB(List<Result> movies) {
         movieDatabase md = movieDatabase.getInstance(getContext());
 
