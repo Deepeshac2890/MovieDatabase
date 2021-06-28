@@ -1,5 +1,11 @@
 package com.example.moviedatabase;
 
+/*
+Created By: Deepesh Acharya
+Maintained By: Deepesh Acharya
+Latest Version Date : 27-06-21
+*/
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
