@@ -25,6 +25,7 @@ public class movie_details_ViewModel extends AndroidViewModel {
 
     @Inject
     TDBApi tdbApi;
+
     private MutableLiveData<SingleMovie> liveDataList;
 
     public movie_details_ViewModel(@NonNull Application application) {

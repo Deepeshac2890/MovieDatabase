@@ -24,6 +24,7 @@ public class now_Playing_ViewModel extends AndroidViewModel {
 
     @Inject
     TDBApi tdbApi;
+
     private MutableLiveData<movieClass> liveDataList;
 
     public now_Playing_ViewModel(@NonNull Application application) {
